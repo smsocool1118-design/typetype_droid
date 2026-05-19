@@ -1,6 +1,8 @@
 package com.typetype.droid
 
+import android.app.ActivityManager
 import android.app.Application
+import android.os.Build
 import com.typetype.droid.asr.SherpaAsrEngineFactory
 import com.typetype.droid.session.DictationMode
 import com.typetype.droid.settings.VoiceImePreferences
@@ -31,6 +33,11 @@ class TypeTypeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        TypeTypeReturnNotification.hide(this)
+        if (isFloatingProcess()) {
+            return
+        }
+        FloatingImeSwitcherService.startIfAllowed(this)
         asrEngineFactory = SherpaAsrEngineFactory(assets)
         hyMtTranslationEngine = HyMtTranslationEngine(this)
         mlKitTranslationEngine = MlKitTranslationEngine()
@@ -76,5 +83,18 @@ class TypeTypeApplication : Application() {
         hyMtTranslationEngine.close()
         mlKitTranslationEngine.close()
         asrEngineFactory.close()
+    }
+
+    private fun isFloatingProcess(): Boolean {
+        return currentProcessName()?.endsWith(":floating") == true
+    }
+
+    private fun currentProcessName(): String? {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            return getProcessName()
+        }
+        val pid = android.os.Process.myPid()
+        val activityManager = getSystemService(ActivityManager::class.java) ?: return null
+        return activityManager.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName
     }
 }

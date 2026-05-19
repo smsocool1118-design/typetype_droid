@@ -46,6 +46,8 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferences = VoiceImePreferences(this)
+        TypeTypeReturnNotification.hide(this)
+        FloatingImeSwitcherService.startIfAllowed(this)
         window.statusBarColor = COLOR_PAGE
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 

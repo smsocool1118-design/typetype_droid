@@ -8,7 +8,12 @@
     <string name="setup_body">启用输入法并授予麦克风权限后即可离线语音输入。</string>
     <string name="grant_mic">授予麦克风权限</string>
     <string name="open_input_settings">打开输入法设置</string>
+    <string name="open_typetype_settings">TypeType 设置</string>
     <string name="choose_input_method">选择输入法</string>
+    <string name="notification_channel_controls">TypeType 快捷入口</string>
+    <string name="notification_channel_controls_desc">用于随时切换输入法或打开 TypeType 设置。</string>
+    <string name="notification_title">TypeType 快捷入口</string>
+    <string name="notification_body">可随时选择输入法或打开 TypeType 设置</string>
     <string name="hero_title">中文语音听写</string>
     <string name="hero_subtitle">本机识别，不上传录音</string>
     <string name="hero_body">第一版聚焦中文离线输入：流式模式会实时回填并允许尾部修正，稳妥模式会在一次识别完成后写入；翻译输出仅支持稳妥模式。</string>

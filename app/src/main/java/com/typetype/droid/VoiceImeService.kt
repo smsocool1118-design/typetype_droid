@@ -1,6 +1,7 @@
 package com.typetype.droid
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
 import android.os.Handler
@@ -8,6 +9,7 @@ import android.os.Looper
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedTextRequest
+import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 import com.typetype.droid.audio.AudioCaptureEngine
 import com.typetype.droid.input.AndroidInputConnectionAdapter
@@ -34,6 +36,8 @@ class VoiceImeService : InputMethodService() {
 
     override fun onCreate() {
         super.onCreate()
+        TypeTypeReturnNotification.hide(this)
+        FloatingImeSwitcherService.startIfAllowed(this)
         preferences = VoiceImePreferences(this)
         val app = application as TypeTypeApplication
         sessionController = VoiceSessionController(
@@ -64,6 +68,8 @@ class VoiceImeService : InputMethodService() {
             onMicClicked = { toggleListening() }
             onDeleteClicked = { deleteBeforeCursor() }
             onDeleteAllClicked = { deleteAllText() }
+            onSettingsClicked = { openSettings() }
+            onSwitchInputMethodClicked = { showInputMethodPicker() }
         }
         inputView.render(sessionController.state)
         return inputView
@@ -77,6 +83,7 @@ class VoiceImeService : InputMethodService() {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        FloatingImeSwitcherService.startIfAllowed(this)
         sessionController.setMode(preferences.loadEffectiveMode())
         warmUpTranslationIfNeeded()
         sessionController.handle(SessionEvent.PrepareRequested)
@@ -143,6 +150,27 @@ class VoiceImeService : InputMethodService() {
             return
         }
         inputConnection.deleteSurroundingText(Int.MAX_VALUE, Int.MAX_VALUE)
+    }
+
+    private fun openSettings() {
+        if (sessionController.state.isActive) {
+            sessionController.handle(SessionEvent.StopRequested)
+        }
+        requestHideSelf(0)
+        startActivity(
+            Intent(this, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            },
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    private fun showInputMethodPicker() {
+        if (sessionController.state.isActive) {
+            sessionController.handle(SessionEvent.StopRequested)
+        }
+        FloatingImeSwitcherService.startIfAllowed(this)
+        (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)?.showInputMethodPicker()
     }
 
     private fun warmUpTranslationIfNeeded() {

@@ -31,6 +31,8 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
     var onMicClicked: (() -> Unit)? = null
     var onDeleteClicked: (() -> Unit)? = null
     var onDeleteAllClicked: (() -> Unit)? = null
+    var onSettingsClicked: (() -> Unit)? = null
+    var onSwitchInputMethodClicked: (() -> Unit)? = null
     private val baseBottomPadding = dp(12)
     private val handler = Handler(Looper.getMainLooper())
     private var deleteRepeating = false
@@ -81,6 +83,16 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         background = ovalDrawable(COLOR_ACCENT)
         setPadding(dp(20), dp(20), dp(20), dp(20))
     }
+    private val settingsButton = ImageButton(context).apply {
+        contentDescription = context.getString(R.string.open_input_settings)
+        setImageResource(R.drawable.ic_settings_24)
+        setColorFilter(COLOR_MUTED)
+        scaleType = ImageView.ScaleType.CENTER
+        background = ovalDrawable(COLOR_SETTINGS_KEY)
+        setPadding(dp(9), dp(9), dp(9), dp(9))
+        translationY = dp(18).toFloat()
+        setOnClickListener { showInputOptionsPopup() }
+    }
 
     init {
         orientation = VERTICAL
@@ -107,10 +119,17 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         topRow.addView(deleteButton, LayoutParams(dp(56), dp(40)).apply { leftMargin = dp(12) })
 
         val micRow = LinearLayout(context).apply {
+            orientation = HORIZONTAL
             gravity = Gravity.CENTER
+            clipChildren = false
+            clipToPadding = false
             setPadding(0, dp(6), 0, 0)
         }
+        micRow.addView(settingsButton, LayoutParams(dp(38), dp(38)))
+        micRow.addView(View(context), LayoutParams(0, 1, 1f))
         micRow.addView(micButton, LayoutParams(dp(72), dp(72)))
+        micRow.addView(View(context), LayoutParams(0, 1, 1f))
+        micRow.addView(View(context), LayoutParams(dp(38), dp(38)))
 
         addView(topRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(40)))
         addView(
@@ -338,6 +357,7 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
     override fun onDetachedFromWindow() {
         stopDeleteRepeat()
         dismissDeleteAllPopup()
+        dismissInputOptionsPopup()
         stopPulseAnimations()
         super.onDetachedFromWindow()
     }
@@ -402,6 +422,7 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
 
     private fun showDeleteAllPopup() {
         if (deleteAllPopup?.isShowing == true || !deleteButton.isAttachedToWindow) return
+        dismissInputOptionsPopup()
         val button = TextView(context).apply {
             text = context.getString(R.string.delete_all_key)
             textSize = 14f
@@ -426,6 +447,67 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
             elevation = dp(8).toFloat()
             showAsDropDown(deleteButton, -dp(24), -dp(94), Gravity.NO_GRAVITY)
         }
+    }
+
+    private var inputOptionsPopup: PopupWindow? = null
+
+    private fun showInputOptionsPopup() {
+        if (!settingsButton.isAttachedToWindow) return
+        if (inputOptionsPopup?.isShowing == true) {
+            dismissInputOptionsPopup()
+            return
+        }
+        dismissDeleteAllPopup()
+        val menu = LinearLayout(context).apply {
+            orientation = VERTICAL
+            background = roundedDrawable(Color.WHITE, dp(18)).apply {
+                setStroke(dp(1), Color.rgb(214, 219, 228))
+            }
+            elevation = dp(10).toFloat()
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+            addView(
+                menuItem(context.getString(R.string.choose_input_method)) {
+                    dismissInputOptionsPopup()
+                    onSwitchInputMethodClicked?.invoke()
+                },
+            )
+            addView(
+                menuItem(context.getString(R.string.open_typetype_settings)) {
+                    dismissInputOptionsPopup()
+                    onSettingsClicked?.invoke()
+                },
+            )
+        }
+        inputOptionsPopup = PopupWindow(
+            menu,
+            dp(184),
+            LayoutParams.WRAP_CONTENT,
+            true,
+        ).apply {
+            isOutsideTouchable = true
+            elevation = dp(10).toFloat()
+            showAsDropDown(settingsButton, 0, -dp(122), Gravity.NO_GRAVITY)
+        }
+    }
+
+    private fun menuItem(textValue: String, onClick: () -> Unit): TextView {
+        return TextView(context).apply {
+            text = textValue
+            textSize = 15f
+            gravity = Gravity.CENTER_VERTICAL
+            includeFontPadding = false
+            setTextColor(COLOR_TEXT)
+            setPadding(dp(14), 0, dp(14), 0)
+            background = roundedDrawable(Color.TRANSPARENT, dp(12))
+            setOnClickListener { onClick() }
+        }.also { item ->
+            item.layoutParams = LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, dp(44))
+        }
+    }
+
+    private fun dismissInputOptionsPopup() {
+        inputOptionsPopup?.dismiss()
+        inputOptionsPopup = null
     }
 
     private fun dismissDeleteAllPopup() {
@@ -471,6 +553,7 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         val COLOR_MUTED: Int = Color.rgb(99, 106, 116)
         val COLOR_DELETE_KEY: Int = Color.rgb(244, 246, 250)
         val COLOR_DELETE_ICON: Int = Color.rgb(104, 112, 123)
+        val COLOR_SETTINGS_KEY: Int = Color.rgb(244, 246, 250)
         val COLOR_DELETE_ALL: Int = Color.rgb(33, 37, 43)
         val COLOR_ERROR_TEXT: Int = Color.rgb(140, 42, 34)
         val COLOR_PREPARING: Int = Color.rgb(232, 149, 44)
