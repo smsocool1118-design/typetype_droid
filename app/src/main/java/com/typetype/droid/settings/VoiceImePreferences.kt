@@ -60,14 +60,14 @@ class VoiceImePreferences(context: Context) {
 
     fun saveTranslationTargetLanguage(targetLanguage: TranslationTargetLanguage) {
         val editor = preferences.edit().putString(KEY_TARGET_LANGUAGE, targetLanguage.name)
-        if (targetLanguage == TranslationTargetLanguage.CANTONESE) {
+        if (!targetLanguage.isMlKitSupported) {
             editor.putString(KEY_BACKEND, TranslationBackend.HY_MT.name)
         }
         editor.apply()
     }
 
     private fun normalizeTranslationSettings(settings: TranslationSettings): TranslationSettings {
-        return if (settings.targetLanguage == TranslationTargetLanguage.CANTONESE) {
+        return if (settings.backend == TranslationBackend.ML_KIT && !settings.targetLanguage.isMlKitSupported) {
             settings.copy(backend = TranslationBackend.HY_MT)
         } else {
             settings

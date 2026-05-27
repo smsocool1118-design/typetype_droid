@@ -23,11 +23,11 @@
     <string name="mode_setting_title">听写模式</string>
     <string name="mode_setting_desc">设置后在语音输入法面板中生效</string>
     <string name="translation_setting_title">输出内容</string>
-    <string name="translation_setting_desc">翻译输出会在本地识别完成后再写入；你可以在 HY-MT 和 ML Kit 两个翻译后端之间切换。</string>
+    <string name="translation_setting_desc">翻译输出会在本地识别完成后再写入；你可以在 HY-MT2 和 ML Kit 两个翻译后端之间切换。</string>
     <string name="translation_backend_title">翻译后端</string>
-    <string name="translation_backend_desc">HY-MT 为内置离线模型，ML Kit 更轻量；ML Kit 不支持粤语目标语言。</string>
+    <string name="translation_backend_desc">HY-MT2 为内置离线模型，支持下方全部目标语言；ML Kit 更轻量，仅保留少量常用目标语言。</string>
     <string name="translation_target_title">翻译语言</string>
-    <string name="translation_target_desc">翻译流程默认按“中文 -> 目标语言”。当前支持英语、日语、德语，粤语为实验性目标语言。</string>
+    <string name="translation_target_desc">翻译流程默认按“中文 -> 目标语言”。HY-MT2 支持 38 个目标语言；选择 ML Kit 不支持的语言会自动切换到 HY-MT2。</string>
     <string name="card_voice_title">麦克风权限</string>
     <string name="card_voice_desc">授予录音权限，输入法才能听写</string>
     <string name="card_ime_title">启用输入法</string>
@@ -42,7 +42,7 @@
     <string name="translation_target_japanese">日语</string>
     <string name="translation_target_german">德语</string>
     <string name="translation_target_cantonese">粤语</string>
-    <string name="translation_backend_hymt">HY-MT</string>
+    <string name="translation_backend_hymt">HY-MT2</string>
     <string name="translation_backend_mlkit">ML Kit</string>
     <string name="status_idle">待机</string>
     <string name="status_preparing">启动中</string>

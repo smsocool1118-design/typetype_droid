@@ -48,7 +48,7 @@ class HyMtTranslationEngine(
 
         try {
             val startMs = elapsedRealtimeOrZero()
-            logInfo("HY-MT translation start target=${targetLanguage.name} chars=${normalized.length}")
+            logInfo("HY-MT2 translation start target=${targetLanguage.name} chars=${normalized.length}")
             ensureModelLoaded()
             val translated = runBlocking {
                 val output = StringBuilder()
@@ -59,16 +59,16 @@ class HyMtTranslationEngine(
                         }
                 }
                 output.toString().trim().ifEmpty {
-                    throw IOException("HY-MT generated empty output")
+                    throw IOException("HY-MT2 generated empty output")
                 }
             }
             val normalizedTranslation = CantoneseTranslationPostProcessor.normalize(translated, targetLanguage)
             logInfo(
-                "HY-MT translation done elapsed=${elapsedRealtimeOrZero() - startMs}ms chars=${normalizedTranslation.length}",
+                "HY-MT2 translation done elapsed=${elapsedRealtimeOrZero() - startMs}ms chars=${normalizedTranslation.length}",
             )
             return normalizedTranslation
         } catch (error: Throwable) {
-            logError("HY-MT translation failed", error)
+            logError("HY-MT2 translation failed", error)
             throw wrapHyMtError("translation", error)
         }
     }
@@ -88,11 +88,11 @@ class HyMtTranslationEngine(
             if (loadedModelPath != null) return
 
             val startMs = elapsedRealtimeOrZero()
-            logInfo("HY-MT ensureModelLoaded start")
+            logInfo("HY-MT2 ensureModelLoaded start")
             val modelFile = ensureBundledModelCopied()
-            logInfo("HY-MT model file ready elapsed=${elapsedRealtimeOrZero() - startMs}ms size=${modelFile.length()}")
+            logInfo("HY-MT2 model file ready elapsed=${elapsedRealtimeOrZero() - startMs}ms size=${modelFile.length()}")
             validateModelFile(modelFile)
-            logInfo("HY-MT model file validated elapsed=${elapsedRealtimeOrZero() - startMs}ms")
+            logInfo("HY-MT2 model file validated elapsed=${elapsedRealtimeOrZero() - startMs}ms")
             runBlocking {
                 withTimeout(MODEL_LOAD_TIMEOUT_MS) {
                     resetErroredEngineIfNeeded()
@@ -104,7 +104,7 @@ class HyMtTranslationEngine(
                     }
                 }
             }
-            logInfo("HY-MT model loaded elapsed=${elapsedRealtimeOrZero() - startMs}ms")
+            logInfo("HY-MT2 model loaded elapsed=${elapsedRealtimeOrZero() - startMs}ms")
         }
     }
 
@@ -134,11 +134,11 @@ class HyMtTranslationEngine(
             }
             if (targetFile.exists() && !targetFile.delete()) {
                 tempFile.delete()
-                throw IOException("Failed to replace stale HY-MT model file")
+                throw IOException("Failed to replace stale HY-MT2 model file")
             }
             if (!tempFile.renameTo(targetFile)) {
                 tempFile.delete()
-                throw IOException("Failed to finalize HY-MT model copy")
+                throw IOException("Failed to finalize HY-MT2 model copy")
             }
             modelCopied.set(true)
             return targetFile
@@ -182,14 +182,14 @@ class HyMtTranslationEngine(
     private fun validateModelFile(file: File) {
         if (file.length() != MODEL_EXPECTED_SIZE_BYTES) {
             throw IOException(
-                "HY-MT model size mismatch: expected=$MODEL_EXPECTED_SIZE_BYTES actual=${file.length()}",
+                "HY-MT2 model size mismatch: expected=$MODEL_EXPECTED_SIZE_BYTES actual=${file.length()}",
             )
         }
         runBlocking {
             try {
                 ggufReader.ensureSourceFileFormat(file)
             } catch (_: InvalidFileFormatException) {
-                throw IOException("HY-MT model is not a valid GGUF file")
+                throw IOException("HY-MT2 model is not a valid GGUF file")
             }
         }
     }
@@ -215,7 +215,7 @@ class HyMtTranslationEngine(
             is ModelLoadException -> "native model load returned code=${error.code}"
             else -> error.message ?: error.javaClass.simpleName
         }
-        return RuntimeException("HY-MT $phase failed: $detail", error)
+        return RuntimeException("HY-MT2 $phase failed: $detail", error)
     }
 
     private fun logInfo(message: String) {
@@ -233,12 +233,15 @@ class HyMtTranslationEngine(
     private companion object {
         const val TAG = "HyMtTranslationEngine"
         const val MODEL_DIR_NAME = "translation-models"
-        const val MODEL_FILE_NAME = "HY-MT1.5-1.8B-Q4_K_M.gguf"
-        const val MODEL_ASSET_PATH = "translation-models/HY-MT1.5-1.8B-Q4_K_M.gguf"
-        const val MODEL_EXPECTED_SIZE_BYTES = 1_133_080_512L
+        const val MODEL_FILE_NAME = "Hy-MT2-1.8B-Q4_K_M.gguf"
+        const val MODEL_ASSET_PATH = "translation-models/Hy-MT2-1.8B-Q4_K_M.gguf"
+        const val MODEL_EXPECTED_SIZE_BYTES = 1_133_080_448L
         const val PREDICT_LENGTH = 160
         const val MODEL_LOAD_TIMEOUT_MS = 180_000L
         const val GENERATION_TIMEOUT_MS = 120_000L
-        val LEGACY_MODEL_FILE_NAMES = setOf("Hy-MT1.5-1.8B-2bit.gguf")
+        val LEGACY_MODEL_FILE_NAMES = setOf(
+            "HY-MT1.5-1.8B-Q4_K_M.gguf",
+            "Hy-MT1.5-1.8B-2bit.gguf",
+        )
     }
 }

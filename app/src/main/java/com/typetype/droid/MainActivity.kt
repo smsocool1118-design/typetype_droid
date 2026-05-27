@@ -12,9 +12,12 @@ import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -37,10 +40,8 @@ class MainActivity : Activity() {
     private lateinit var translationOutputOption: TextView
     private lateinit var hyMtBackendOption: TextView
     private lateinit var mlKitBackendOption: TextView
-    private lateinit var englishTargetOption: TextView
-    private lateinit var japaneseTargetOption: TextView
-    private lateinit var germanTargetOption: TextView
-    private lateinit var cantoneseTargetOption: TextView
+    private lateinit var targetLanguageSpinner: Spinner
+    private var suppressTargetLanguageSelection = false
 
     @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -150,7 +151,7 @@ class MainActivity : Activity() {
                     )
                     addView(
                         TextView(this@MainActivity).apply {
-                            text = "纯语音输入 · HY-MT 翻译"
+                            text = "纯语音输入 · HY-MT2 翻译"
                             textSize = 12f
                             setTextColor(COLOR_ACCENT_DEEP)
                             includeFontPadding = false
@@ -455,41 +456,62 @@ class MainActivity : Activity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
             )
 
-            addView(
-                LinearLayout(this@MainActivity).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    setPadding(0, dp(12), 0, 0)
-                    englishTargetOption = modeOption(getString(R.string.translation_target_english)) {
-                        saveTranslationTargetLanguage(TranslationTargetLanguage.ENGLISH)
-                    }
-                    japaneseTargetOption = modeOption(getString(R.string.translation_target_japanese)) {
-                        saveTranslationTargetLanguage(TranslationTargetLanguage.JAPANESE)
-                    }
-                    addView(englishTargetOption, LinearLayout.LayoutParams(0, dp(40), 1f).apply { rightMargin = dp(6) })
-                    addView(japaneseTargetOption, LinearLayout.LayoutParams(0, dp(40), 1f).apply { leftMargin = dp(6) })
-                },
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            )
-
-            addView(
-                LinearLayout(this@MainActivity).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    setPadding(0, dp(10), 0, 0)
-                    germanTargetOption = modeOption(getString(R.string.translation_target_german)) {
-                        saveTranslationTargetLanguage(TranslationTargetLanguage.GERMAN)
-                    }
-                    cantoneseTargetOption = modeOption(getString(R.string.translation_target_cantonese)) {
-                        saveTranslationTargetLanguage(TranslationTargetLanguage.CANTONESE)
-                    }
-                    addView(germanTargetOption, LinearLayout.LayoutParams(0, dp(40), 1f).apply { rightMargin = dp(6) })
-                    addView(cantoneseTargetOption, LinearLayout.LayoutParams(0, dp(40), 1f).apply { leftMargin = dp(6) })
-                },
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT,
-            )
+            addView(targetLanguageDropdown())
 
             updateTranslationSelection(preferences.loadTranslationSettings())
+        }
+    }
+
+    private fun targetLanguageDropdown(): View {
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(12), 0, 0)
+
+            addView(
+                TextView(this@MainActivity).apply {
+                    text = getString(R.string.translation_target_title)
+                    textSize = 15f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(COLOR_TEXT)
+                },
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT),
+            )
+
+            addView(space(dp(12), 1))
+
+            targetLanguageSpinner = Spinner(this@MainActivity).apply {
+                background = roundedDrawable(Color.rgb(245, 247, 249), dp(14))
+                setPadding(dp(12), 0, dp(12), 0)
+                adapter = ArrayAdapter(
+                    this@MainActivity,
+                    android.R.layout.simple_spinner_item,
+                    TranslationTargetLanguage.entries.map { it.label },
+                ).apply {
+                    setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                }
+                val initialIndex = TranslationTargetLanguage.entries
+                    .indexOf(preferences.loadTranslationSettings().targetLanguage)
+                    .coerceAtLeast(0)
+                setSelection(initialIndex, false)
+                onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        position: Int,
+                        id: Long,
+                    ) {
+                        if (suppressTargetLanguageSelection) return
+                        val language = TranslationTargetLanguage.entries[position]
+                        if (preferences.loadTranslationSettings().targetLanguage != language) {
+                            saveTranslationTargetLanguage(language)
+                        }
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+                }
+            }
+            addView(targetLanguageSpinner, LinearLayout.LayoutParams(0, dp(42), 1f))
         }
     }
 
@@ -665,7 +687,7 @@ class MainActivity : Activity() {
     private fun saveTranslationBackend(backend: TranslationBackend) {
         preferences.saveTranslationBackend(backend)
         val previous = preferences.loadTranslationSettings()
-        val adjustedTarget = if (backend == TranslationBackend.ML_KIT && previous.targetLanguage == TranslationTargetLanguage.CANTONESE) {
+        val adjustedTarget = if (backend == TranslationBackend.ML_KIT && !previous.targetLanguage.isMlKitSupported) {
             TranslationTargetLanguage.ENGLISH
         } else {
             previous.targetLanguage
@@ -683,11 +705,11 @@ class MainActivity : Activity() {
 
     private fun saveTranslationTargetLanguage(targetLanguage: TranslationTargetLanguage) {
         preferences.saveTranslationTargetLanguage(targetLanguage)
-        val settings = preferences.loadTranslationSettings().copy(targetLanguage = targetLanguage)
+        val settings = preferences.loadTranslationSettings()
         updateTranslationSelection(settings)
         updateModeSelection(preferences.loadEffectiveMode(), settings)
         if (settings.outputMode == TranslationOutputMode.TRANSLATION) {
-            (application as TypeTypeApplication).warmUpTranslation(settings.backend, targetLanguage)
+            (application as TypeTypeApplication).warmUpTranslation(settings.backend, settings.targetLanguage)
         }
     }
 
@@ -703,18 +725,15 @@ class MainActivity : Activity() {
         styleModeOption(translationOutputOption, settings.outputMode == TranslationOutputMode.TRANSLATION)
         styleModeOption(hyMtBackendOption, settings.backend == TranslationBackend.HY_MT)
         styleModeOption(mlKitBackendOption, settings.backend == TranslationBackend.ML_KIT)
-        styleModeOption(englishTargetOption, settings.targetLanguage == TranslationTargetLanguage.ENGLISH)
-        styleModeOption(japaneseTargetOption, settings.targetLanguage == TranslationTargetLanguage.JAPANESE)
-        styleModeOption(germanTargetOption, settings.targetLanguage == TranslationTargetLanguage.GERMAN)
-        styleModeOption(cantoneseTargetOption, settings.targetLanguage == TranslationTargetLanguage.CANTONESE)
+        val targetIndex = TranslationTargetLanguage.entries.indexOf(settings.targetLanguage).coerceAtLeast(0)
+        suppressTargetLanguageSelection = true
+        targetLanguageSpinner.setSelection(targetIndex, false)
+        suppressTargetLanguageSelection = false
 
         val translationEnabled = settings.outputMode == TranslationOutputMode.TRANSLATION
         setTargetOptionEnabled(hyMtBackendOption, translationEnabled)
         setTargetOptionEnabled(mlKitBackendOption, translationEnabled)
-        setTargetOptionEnabled(englishTargetOption, translationEnabled)
-        setTargetOptionEnabled(japaneseTargetOption, translationEnabled)
-        setTargetOptionEnabled(germanTargetOption, translationEnabled)
-        setTargetOptionEnabled(cantoneseTargetOption, translationEnabled && settings.backend == TranslationBackend.HY_MT)
+        setTargetOptionEnabled(targetLanguageSpinner, translationEnabled)
     }
 
     private fun styleModeOption(view: TextView, selected: Boolean) {
@@ -722,7 +741,7 @@ class MainActivity : Activity() {
         view.background = roundedDrawable(if (selected) COLOR_TEXT else Color.rgb(245, 247, 249), dp(14))
     }
 
-    private fun setTargetOptionEnabled(view: TextView, enabled: Boolean) {
+    private fun setTargetOptionEnabled(view: View, enabled: Boolean) {
         view.isEnabled = enabled
         view.alpha = if (enabled) 1f else 0.45f
     }

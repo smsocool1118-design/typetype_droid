@@ -67,6 +67,8 @@ class SherpaAsrEngineFactory(
                         ?: error("Missing streaming sherpa-onnx model config"),
                     endpointConfig = getEndpointConfig(),
                     enableEndpoint = true,
+                    hotwordsFile = HOTWORDS_ASSET_PATH,
+                    hotwordsScore = HOTWORDS_SCORE,
                 ),
             ).also { streamingRecognizer = it }
         }
@@ -80,6 +82,8 @@ class SherpaAsrEngineFactory(
                     featConfig = getFeatureConfig(AudioCaptureEngine.SAMPLE_RATE, featureDim = 80),
                     modelConfig = getOfflineModelConfig(OFFLINE_ZH_MODEL_TYPE)
                         ?: error("Missing offline sherpa-onnx model config"),
+                    hotwordsFile = HOTWORDS_ASSET_PATH,
+                    hotwordsScore = HOTWORDS_SCORE,
                 ),
             ).also { offlineRecognizer = it }
         }
@@ -251,3 +255,5 @@ private class SherpaOfflineAsrEngine(
 private const val STREAMING_ZH_MODEL_TYPE = 15
 private const val OFFLINE_ZH_MODEL_TYPE = 41
 private const val MIN_TEXT_EVENT_INTERVAL_MS = 100L
+private const val HOTWORDS_ASSET_PATH = "hotwords_zh_cn.txt"
+private const val HOTWORDS_SCORE = 2.0f

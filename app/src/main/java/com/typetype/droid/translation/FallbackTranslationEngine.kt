@@ -6,13 +6,19 @@ class FallbackTranslationEngine(
 ) : TranslationEngine {
     override fun warmUp(targetLanguage: TranslationTargetLanguage) {
         runCatching { primary.warmUp(targetLanguage) }
-            .recoverCatching { fallback.warmUp(targetLanguage) }
+            .recoverCatching { error ->
+                if (!targetLanguage.isMlKitSupported) throw error
+                fallback.warmUp(targetLanguage)
+            }
             .getOrThrow()
     }
 
     override fun translate(text: String, targetLanguage: TranslationTargetLanguage): String {
         return runCatching { primary.translate(text, targetLanguage) }
-            .recoverCatching { fallback.translate(text, targetLanguage) }
+            .recoverCatching { error ->
+                if (!targetLanguage.isMlKitSupported) throw error
+                fallback.translate(text, targetLanguage)
+            }
             .getOrThrow()
     }
 
