@@ -155,7 +155,10 @@ class VoiceSessionController(
                     resetCurrentDictationSegment()
                     return@applyRewrite
                 }
-                commitController.commitFinal(rewritten)
+                val finalText = StructuredTextFormatter.normalizeNumbers(
+                    StructuredTextFormatter.removeAsrArtifacts(rewritten).trim(),
+                ).ifBlank { localText }
+                commitController.commitFinal(finalText)
                 if (stopCompletionPending) {
                     completeFinalizedStop()
                 } else if (state.phase == VoiceSessionState.Phase.TRANSLATING) {
@@ -224,7 +227,9 @@ class VoiceSessionController(
 
     private fun finalizeStreamingRewrite(text: String, replaceSource: String? = null) {
         val engineToClose = engine
-        val rewritten = StructuredTextFormatter.removeAsrArtifacts(text).trim()
+        val rewritten = StructuredTextFormatter.normalizeNumbers(
+            StructuredTextFormatter.removeAsrArtifacts(text).trim(),
+        )
         if (rewritten.isNotBlank()) {
             val replaced = if (replaceSource.isNullOrBlank()) {
                 commitController.replaceStreamingText(rewritten)

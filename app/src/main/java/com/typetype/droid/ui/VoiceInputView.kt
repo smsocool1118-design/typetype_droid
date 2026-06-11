@@ -35,6 +35,7 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
     var onMicClicked: (() -> Unit)? = null
     var onDeleteClicked: (() -> Unit)? = null
     var onDeleteAllClicked: (() -> Unit)? = null
+    var onSwitchInputMethodClicked: (() -> Unit)? = null
     var onRewriteClicked: (() -> Unit)? = null
     private val baseBottomPadding = dp(12)
     private val handler = Handler(Looper.getMainLooper())
@@ -180,7 +181,6 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         background = ovalDrawable(COLOR_ACCENT)
         setPadding(dp(20), dp(20), dp(20), dp(20))
     }
-
     init {
         orientation = VERTICAL
         gravity = Gravity.CENTER
@@ -206,10 +206,17 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         topRow.addView(deleteButton, LayoutParams(dp(56), dp(40)).apply { leftMargin = dp(12) })
 
         val micRow = LinearLayout(context).apply {
+            orientation = HORIZONTAL
             gravity = Gravity.CENTER
+            clipChildren = false
+            clipToPadding = false
             setPadding(0, dp(6), 0, 0)
         }
+        micRow.addView(View(context), LayoutParams(dp(38), dp(38)))
+        micRow.addView(View(context), LayoutParams(0, 1, 1f))
         micRow.addView(micButton, LayoutParams(dp(72), dp(72)))
+        micRow.addView(View(context), LayoutParams(0, 1, 1f))
+        micRow.addView(View(context), LayoutParams(dp(38), dp(38)))
 
         addView(topRow, LayoutParams(LayoutParams.MATCH_PARENT, dp(40)))
         addView(
@@ -636,6 +643,7 @@ class VoiceInputView(context: Context) : LinearLayout(context) {
         val COLOR_MUTED: Int = Color.rgb(99, 106, 116)
         val COLOR_DELETE_KEY: Int = Color.rgb(244, 246, 250)
         val COLOR_DELETE_ICON: Int = Color.rgb(104, 112, 123)
+        val COLOR_SETTINGS_KEY: Int = Color.rgb(244, 246, 250)
         val COLOR_DELETE_ALL: Int = Color.rgb(33, 37, 43)
         val COLOR_ERROR_TEXT: Int = Color.rgb(140, 42, 34)
         val COLOR_PREPARING: Int = Color.rgb(232, 149, 44)

@@ -180,7 +180,7 @@ class VoiceSessionControllerTest {
         controller.handle(SessionEvent.StreamingText("今天有两件事第一修复流式第二测试粤语"))
         controller.handle(SessionEvent.StopRequested)
 
-        assertEquals("今天有两件事：\n1. 修复流式。\n2. 测试粤语。", connection.text)
+        assertEquals("今天有2件事：\n1. 修复流式。\n2. 测试粤语。", connection.text)
         assertEquals(VoiceSessionState.Phase.IDLE, controller.state.phase)
     }
 
@@ -221,10 +221,10 @@ class VoiceSessionControllerTest {
         controller.installEngineForTest(asrEngineFactory.engine)
         controller.setPhaseForTest(VoiceSessionState.Phase.LISTENING)
         controller.handle(SessionEvent.StreamingText("今天有两件事第一测试流式第二检查粤语"))
-        assertEquals("今天有两件事第一测试流式第二检查粤语", controller.state.draftText)
+        assertEquals("今天有2件事第一测试流式第二检查粤语", controller.state.draftText)
         controller.handle(SessionEvent.StreamingRewriteRequested)
 
-        assertEquals("今天有两件事：\n1. 测试流式。\n2. 检查粤语。", connection.text)
+        assertEquals("今天有2件事：\n1. 测试流式。\n2. 检查粤语。", connection.text)
         assertEquals(VoiceSessionState.Phase.IDLE, controller.state.phase)
     }
 
@@ -282,7 +282,7 @@ class VoiceSessionControllerTest {
         controller.setPhaseForTest(VoiceSessionState.Phase.LISTENING)
         controller.handle(SessionEvent.StreamingRewriteRequested)
 
-        assertEquals("今天有两件事：\n1. 测试流式。\n2. 检查粤语。", connection.text)
+        assertEquals("今天有2件事：\n1. 测试流式。\n2. 检查粤语。", connection.text)
         assertEquals(VoiceSessionState.Phase.IDLE, controller.state.phase)
     }
 
@@ -305,7 +305,7 @@ class VoiceSessionControllerTest {
         controller.handle(SessionEvent.StreamingRewriteRequested)
 
         assertEquals("旧的流式缓存", oldConnection.text)
-        assertEquals("今天有两件事：\n1. 整理微信输入框。\n2. 测试AI带入。", newConnection.text)
+        assertEquals("今天有2件事：\n1. 整理微信输入框。\n2. 测试AI带入。", newConnection.text)
         assertEquals(VoiceSessionState.Phase.IDLE, controller.state.phase)
     }
 
@@ -326,7 +326,7 @@ class VoiceSessionControllerTest {
         controller.handle(SessionEvent.OfflineText("今天有两件事第一修复流式第二测试粤语"))
         controller.handle(SessionEvent.StopRequested)
 
-        assertEquals("今天有两件事：\n1. 修复流式。\n2. 测试粤语。", connection.text)
+        assertEquals("今天有2件事：\n1. 修复流式。\n2. 测试粤语。", connection.text)
         assertEquals(VoiceSessionState.Phase.IDLE, controller.state.phase)
     }
 

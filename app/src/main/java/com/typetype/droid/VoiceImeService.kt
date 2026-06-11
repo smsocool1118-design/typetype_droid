@@ -8,6 +8,8 @@ import android.os.Looper
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.ExtractedTextRequest
+import android.view.inputmethod.InputMethodManager
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.typetype.droid.audio.AudioCaptureEngine
 import com.typetype.droid.input.AndroidInputConnectionAdapter
@@ -67,6 +69,7 @@ class VoiceImeService : InputMethodService() {
             onMicClicked = { toggleListening() }
             onDeleteClicked = { deleteBeforeCursor() }
             onDeleteAllClicked = { deleteAllText() }
+            onSwitchInputMethodClicked = { showInputMethodPicker() }
             onRewriteClicked = {
                 sessionController.refreshInputConnection(currentInputConnection?.let(::AndroidInputConnectionAdapter))
                 sessionController.handle(SessionEvent.StreamingRewriteRequested)
@@ -85,6 +88,7 @@ class VoiceImeService : InputMethodService() {
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        FloatingImeSwitcherService.stop(this)
         sessionController.setMode(preferences.loadEffectiveMode())
         inputViewOrNull()?.configureAndroid031(preferences.loadAndroid031Settings())
         warmUpTranslationIfNeeded()
@@ -95,6 +99,7 @@ class VoiceImeService : InputMethodService() {
     override fun onFinishInputView(finishingInput: Boolean) {
         sessionController.handle(SessionEvent.InputFinished)
         super.onFinishInputView(finishingInput)
+        scheduleFloatingSwitcherStart()
     }
 
     override fun onFinishInput() {
@@ -152,6 +157,26 @@ class VoiceImeService : InputMethodService() {
             return
         }
         inputConnection.deleteSurroundingText(Int.MAX_VALUE, Int.MAX_VALUE)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun showInputMethodPicker() {
+        if (sessionController.state.isActive) {
+            sessionController.handle(SessionEvent.StopRequested)
+        }
+        if (!FloatingImeSwitcherService.canDrawOverlays(this)) {
+            Toast.makeText(this, R.string.overlay_permission_required, Toast.LENGTH_LONG).show()
+            FloatingImeSwitcherService.requestOverlayPermission(this)
+            return
+        }
+        (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)?.showInputMethodPicker()
+        scheduleFloatingSwitcherStart()
+    }
+
+    private fun scheduleFloatingSwitcherStart() {
+        listOf(250L, 750L, 1_500L, 2_500L).forEach { delayMillis ->
+            mainHandler.postDelayed({ FloatingImeSwitcherService.startIfAllowed(this) }, delayMillis)
+        }
     }
 
     private fun warmUpTranslationIfNeeded() {

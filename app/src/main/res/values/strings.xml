@@ -11,7 +11,7 @@
     <string name="choose_input_method">选择输入法</string>
     <string name="hero_title">中文语音听写</string>
     <string name="hero_subtitle">本机识别，不上传录音</string>
-    <string name="hero_body">0.3.1 支持流式回填、稳妥听写、HY-MT2 离线翻译、本地大词库和可选 AI 联网润写。翻译输出仍使用稳妥模式，避免边识别边改写造成误发。</string>
+    <string name="hero_body">0.3.2 支持流式回填、稳妥听写、HY-MT2 离线翻译、本地大词库、阿拉伯数字修正和可选 AI 联网润写。翻译输出仍使用稳妥模式，避免边识别边改写造成误发。</string>
     <string name="hero_chip_offline">本机识别</string>
     <string name="hero_chip_streaming">AI 可选</string>
     <string name="settings_section">设置</string>
@@ -29,6 +29,10 @@
     <string name="card_ime_desc">在系统设置中启用 TypeType Voice</string>
     <string name="card_picker_title">切换到语音输入法</string>
     <string name="card_picker_desc">从当前输入法切换到 TypeType Voice</string>
+    <string name="card_overlay_title">悬浮切换球</string>
+    <string name="card_overlay_desc">允许显示在其他应用上层，切到其他输入法后可点左下角圆钮切回 TypeType</string>
+    <string name="overlay_permission_ready">悬浮切换球已可用</string>
+    <string name="overlay_permission_required">请先允许悬浮切换球，之后才能从其他输入法一键切回 TypeType</string>
     <string name="mode_streaming">流式</string>
     <string name="mode_offline">稳妥</string>
     <string name="output_dictation">原文</string>

@@ -133,6 +133,11 @@ class MainActivity : Activity() {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        FloatingImeSwitcherService.startIfAllowed(this)
+    }
+
     private fun header(): View {
         return LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -303,6 +308,16 @@ class MainActivity : Activity() {
                 },
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT,
+            )
+            addView(
+                primaryActionCard(
+                    CardSpec(R.drawable.ic_switch_line, R.string.card_overlay_title, R.string.card_overlay_desc) {
+                        requestOverlayPermission()
+                    },
+                ),
+                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(106)).apply {
+                    topMargin = dp(16)
+                },
             )
         }
     }
@@ -1083,6 +1098,15 @@ class MainActivity : Activity() {
         if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO)
         }
+    }
+
+    private fun requestOverlayPermission() {
+        if (FloatingImeSwitcherService.canDrawOverlays(this)) {
+            FloatingImeSwitcherService.startIfAllowed(this)
+            Toast.makeText(this, R.string.overlay_permission_ready, Toast.LENGTH_SHORT).show()
+            return
+        }
+        FloatingImeSwitcherService.requestOverlayPermission(this)
     }
 
     private fun saveMode(mode: DictationMode) {
